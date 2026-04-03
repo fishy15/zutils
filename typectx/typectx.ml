@@ -86,3 +86,8 @@ let update_or_add (ctx : 'a ctx) (f : 'a -> 'a -> 'a)
       let ctx = filter_ctx_name (fun name -> not (String.equal name x)) ctx in
       add_to_right ctx { x; ty = new_value }
   | None -> add_to_right ctx { x; ty }
+
+let concat_update (ctx1 : 'a ctx) (ctx2 : 'a ctx) (f : 'a -> 'a -> 'a) : 'a ctx
+    =
+  match ctx1 with
+  | Typectx l1 -> List.fold_left (fun acc x -> update_or_add acc f x) ctx2 l1
