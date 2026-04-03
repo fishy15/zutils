@@ -77,3 +77,12 @@ let subtract_opt eq ctx1 ctx2 =
             else None
       in
       aux (l1, l2)
+
+let update_or_add (ctx : 'a ctx) (f : 'a -> 'a -> 'a)
+    ({ x; ty } : ('a, string) typed) : 'a ctx =
+  match get_opt ctx x with
+  | Some old ->
+      let new_value = f old ty in
+      let ctx = filter_ctx_name (fun name -> not (String.equal name x)) ctx in
+      add_to_right ctx { x; ty = new_value }
+  | None -> add_to_right ctx { x; ty }

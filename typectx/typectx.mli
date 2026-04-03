@@ -23,3 +23,4 @@ val filter_ctx_typed : (('a, string) Sugar.typed -> bool) -> 'a ctx -> 'a ctx
 val filter_ctx_name : (string -> bool) -> 'a ctx -> 'a ctx
 val layout_ctx : ?splitter:string -> ('a -> string) -> 'a ctx -> string
 val pprint_ctx : ?splitter:string -> ('a -> string) -> 'a ctx -> unit
+val update_or_add : 'a ctx -> ('a -> 'a -> 'a) -> ('a, string) Sugar.typed -> 'a ctx
