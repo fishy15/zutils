@@ -79,15 +79,18 @@ let subtract_opt eq ctx1 ctx2 =
       aux (l1, l2)
 
 let update_or_add (ctx : 'a ctx) (f : 'a -> 'a -> 'a)
-    ({ x; ty } : ('a, string) typed) : 'a ctx =
+    ({ x; ty = new_ty } : ('a, string) typed) : 'a ctx =
   match get_opt ctx x with
-  | Some old ->
-      let new_value = f old ty in
+  | Some old_ty ->
+      let new_value = f old_ty new_ty in
       let ctx = filter_ctx_name (fun name -> not (String.equal name x)) ctx in
       add_to_right ctx { x; ty = new_value }
-  | None -> add_to_right ctx { x; ty }
+  | None -> add_to_right ctx { x; ty = new_ty }
 
-let concat_update (ctx1 : 'a ctx) (ctx2 : 'a ctx) (f : 'a -> 'a -> 'a) : 'a ctx
-    =
-  match ctx1 with
-  | Typectx l1 -> List.fold_left (fun acc x -> update_or_add acc f x) ctx2 l1
+let concat_update (old_ctx : 'a ctx) (new_ctx : 'a ctx) (f : 'a -> 'a -> 'a) :
+    'a ctx =
+  match new_ctx with
+  | Typectx new_xs ->
+      List.fold_right
+        (fun new_x acc -> update_or_add acc f new_x)
+        new_xs old_ctx
