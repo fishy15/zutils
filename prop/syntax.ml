@@ -524,13 +524,15 @@ let is_eq_phi x phi =
 
 let smart_forall_phi (x, phi) query =
   match is_eq_phi x phi with
-  | None -> smart_forall [ x ] (smart_implies phi query)
-  | Some lit -> subst_prop_instance x.x lit query
+  | Some lit when not (equal_lit Nt.equal_nt (AVar x) lit) ->
+      subst_prop_instance x.x lit query
+  | _ -> smart_forall [ x ] (smart_implies phi query)
 
 let smart_exists_phi (x, phi) query =
   match is_eq_phi x phi with
-  | None -> smart_exists [ x ] (smart_add_to phi query)
-  | Some lit -> subst_prop_instance x.x lit query
+  | Some lit when not (equal_lit Nt.equal_nt (AVar x) lit) ->
+      subst_prop_instance x.x lit query
+  | _ -> smart_exists [ x ] (smart_add_to phi query)
 
 (* let rec has_top_ex phi = *)
 (*   match phi with *)
