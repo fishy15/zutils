@@ -100,9 +100,9 @@ let rec smt_tp_to_sort ctx t =
       Datatype.mk_sort_s ctx option_name [ constructor_none; constructor_some ]
   | Smt_tuple l ->
       let tuple_name = layout_smtty t in
-      let () =
-        Printf.printf "smtty(%s) -> %s\n" (show_smtty t) (layout_smtty t)
-      in
+      (* let () = *)
+      (*   Printf.printf "smtty(%s) -> %s\n" (show_smtty t) (layout_smtty t) *)
+      (* in *)
       let n = List.length l in
       let sym = Symbol.mk_string ctx tuple_name in
       let syms = List.init n (fun i -> tuple_field ctx tuple_name i) in

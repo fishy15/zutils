@@ -8,11 +8,14 @@ module Propencoding = Propencoding
 
 type smt_result = SmtSat of Model.model | SmtUnsat | Timeout
 
+let layout_model model =
+  Sugar.short_str (Myconfig.get_max_printing_size ())
+  @@ Z3.Model.to_string model
+
 let layout_smt_result = function
   | SmtSat model ->
       ( _log "model" @@ fun _ ->
-        Printf.printf "model:\n%s\n"
-        @@ Sugar.short_str 1000 @@ Z3.Model.to_string model );
+        Printf.printf "model:\n%s\n" (layout_model model) );
       "sat"
   | SmtUnsat -> "unsat"
   | Timeout -> "timeout"
@@ -43,11 +46,11 @@ let _prover : prover option ref = ref None
 
 let reset_solver_in_prover () =
   match !_prover with
-  | Some p -> 
-    let solver = mk_solver p.ctx None in
-    let p = {p with solver} in
-    let () = _prover := Some p in
-    p
+  | Some p ->
+      let solver = mk_solver p.ctx None in
+      let p = { p with solver } in
+      let () = _prover := Some p in
+      p
   | None ->
       let p = mk_prover () in
       let () = _prover := Some p in
@@ -134,8 +137,7 @@ let check_sat_bool (task, prop) =
     | SmtUnsat -> false
     | SmtSat model ->
         ( _log "model" @@ fun _ ->
-          Printf.printf "model:\n%s\n"
-          @@ Sugar.short_str 1000 @@ Z3.Model.to_string model );
+          Printf.printf "model:\n%s\n" (layout_model model) );
         true
     | Timeout ->
         (_log_queries @@ fun _ -> Pp.printf "@{<bold>SMTTIMEOUT@}\n");
@@ -164,8 +166,7 @@ let check_valid (task, prop) =
   | SmtUnsat -> true
   | SmtSat model ->
       ( _log "model" @@ fun _ ->
-        Printf.printf "model:\n%s\n"
-        @@ Sugar.short_str 1000 @@ Z3.Model.to_string model );
+        Printf.printf "model:\n%s\n" (layout_model model) );
       false
   | Timeout ->
       (_log_queries @@ fun _ -> Pp.printf "@{<bold>SMTTIMEOUT@}\n");

@@ -93,7 +93,10 @@ let type_unification m (cs : (t * t) list) =
     | [] -> Some m
     | (t1, t2) :: cs -> (
         let err () =
-          Printf.printf "cannot solve %s = %s\n" (layout_nt t1) (layout_nt t2);
+          let () =
+            _log @@ fun _ ->
+            Printf.printf "cannot solve %s = %s\n" (layout_nt t1) (layout_nt t2)
+          in
           None
         in
         match (t1, t2) with
