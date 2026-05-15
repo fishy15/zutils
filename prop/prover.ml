@@ -116,7 +116,6 @@ let check_sat (task, prop) =
   (*   _log_queries @@ fun _ -> *)
   (*   Pp.printf "@{<bold>Simplifid Goal:@}\n%s\n" (Goal.to_string goal) *)
   (* in *)
-  Goal.add goal axioms;
   Solver.reset solver;
   Solver.add solver (get_formulas goal);
   let time_t, res = Sugar.clock (fun () -> handle_sat_result solver) in
