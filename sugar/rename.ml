@@ -76,3 +76,11 @@ let dummy_var () = unique_var "dummyVar"
 let dummy_type_var () = unique_var "dummyTypeVar"
 let fresh_type_var () = unique_var "tv"
 let fresh_var () = unique_var "tmp"
+
+let different_var name =
+  let name' = unique_var name in
+  if name <> name' then name'
+  else
+    let name' = unique_var name in
+    _assert [%here] (spf "should get a different name: %s" name) (name <> name');
+    name'
