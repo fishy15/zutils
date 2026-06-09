@@ -9,7 +9,8 @@ let _log = Myconfig._log "axiom"
 let add_laxiom asys (name, tasks, prop, z3_prop) =
   let tasks = StrSet.of_list tasks in
   let preds = StrSet.of_list @@ get_fv_preds_from_prop prop in
-  if StrMap.mem name asys then _die [%here]
+  if StrMap.mem name asys then
+    _die_with [%here] (spf "axiom %s already exists" name)
   else StrMap.add name { tasks; preds; prop; z3_prop } asys
 
 let add_laxioms asys l = List.fold_left add_laxiom asys l
