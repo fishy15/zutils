@@ -4,6 +4,7 @@ open Goal
 open Sugar
 open Syntax
 open Myconfig
+open Zdatatype
 module Propencoding = Propencoding
 
 type smt_result = SmtSat of Model.model | SmtUnsat | Timeout
@@ -95,11 +96,74 @@ let handle_sat_result solver =
       | None -> failwith "never happen"
       | Some m -> SmtSat m)
 
+let normalize_prop_vars prop =
+  let rename_prop_vars_with_prefix prefix prop =
+    let rec get_vars = function
+      | Lit _ -> StrSet.empty
+      | Implies (e1, e2) -> StrSet.union (get_vars e1) (get_vars e2)
+      | Ite (e1, e2, e3) ->
+          StrSet.union (get_vars e1) (StrSet.union (get_vars e2) (get_vars e3))
+      | Not p -> get_vars p
+      | And es | Or es ->
+          List.fold_left
+            (fun s e -> StrSet.union s (get_vars e))
+            StrSet.empty es
+      | Iff (e1, e2) -> StrSet.union (get_vars e1) (get_vars e2)
+      | Forall { qv; body } | Exists { qv; body } ->
+          StrSet.add qv.x (get_vars body)
+    in
+    let oldvars = get_vars prop in
+    let rec get_next_var varcnt qv =
+      let var = spf "%s_%d" prefix varcnt in
+      if StrSet.mem var oldvars then get_next_var (varcnt + 1) qv
+      else (varcnt + 1, var#:qv.ty)
+    in
+    let rec aux varcnt query =
+      match query with
+      | Lit lit -> (varcnt, Lit lit)
+      | Implies (e1, e2) ->
+          let varcnt, e1 = aux varcnt e1 in
+          let varcnt, e2 = aux varcnt e2 in
+          (varcnt, Implies (e1, e2))
+      | Ite (e1, e2, e3) ->
+          let varcnt, e1 = aux varcnt e1 in
+          let varcnt, e2 = aux varcnt e2 in
+          let varcnt, e3 = aux varcnt e3 in
+          (varcnt, Ite (e1, e2, e3))
+      | Not p ->
+          let varcnt, p = aux varcnt p in
+          (varcnt, Not p)
+      | And es ->
+          let varcnt, es = List.fold_left_map aux varcnt es in
+          (varcnt, smart_and es)
+      | Or es ->
+          let varcnt, es = List.fold_left_map aux varcnt es in
+          (varcnt, smart_or es)
+      | Iff (e1, e2) ->
+          let varcnt, e1 = aux varcnt e1 in
+          let varcnt, e2 = aux varcnt e2 in
+          (varcnt, Iff (e1, e2))
+      | Forall { qv; body } ->
+          let varcnt, qv' = get_next_var varcnt qv in
+          let varcnt, body = aux varcnt body in
+          let body = subst_prop_instance qv.x (AVar qv') body in
+          (varcnt, Forall { qv = qv'; body })
+      | Exists { qv; body } ->
+          let varcnt, qv' = get_next_var varcnt qv in
+          let varcnt, body = aux varcnt body in
+          let body = subst_prop_instance qv.x (AVar qv') body in
+          (varcnt, Exists { qv = qv'; body })
+    in
+    snd (aux 0 prop)
+  in
+  rename_prop_vars_with_prefix "w" prop |> rename_prop_vars_with_prefix "v"
+
 let check_sat (task, prop) =
   let { goal; solver; ax_sys; ctx } = get_prover () in
   let axioms =
     List.map (Propencoding.to_z3 ctx) @@ Axiom.find_axioms ax_sys (task, prop)
   in
+  let prop = normalize_prop_vars prop in
   let query = Propencoding.to_z3 ctx prop in
   let _ =
     _log_queries @@ fun _ ->

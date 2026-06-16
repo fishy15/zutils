@@ -17,7 +17,7 @@
       // "parsing",
       // "unification",
       "model",
-      // "z3encode",
+      "z3encode",
       // "desym_mapping",
       // "desymbolic",
     "never-use"
