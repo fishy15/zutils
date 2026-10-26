@@ -287,6 +287,30 @@ let subst_prop_instance x instance e =
 let typed_subst_prop_instance x instance e =
   subst_f_to_instance typed_subst_prop x instance e
 
+let freshen_prop_instance x e =
+  let x' = Rename.unique_var x in
+  let e' = subst_prop x (fun { ty; _ } -> AVar x'#:ty) e in
+  (x', e')
+
+let freshen_typed_prop_instance x { x = e; ty } =
+  let x', e' = freshen_prop_instance x e in
+  (x', e'#:ty)
+
+let freshen_prop_typed_instance { x; ty } e =
+  let x' = Rename.unique_var x in
+  let rename_with_assert { ty = ty'; _ } =
+    _assert [%here]
+      (spf "nts must be equal: %s %s" (Nt.layout ty) (Nt.layout ty'))
+      (Nt.equal_nt ty ty');
+    AVar x'#:ty
+  in
+  let e' = subst_prop x rename_with_assert e in
+  (x'#:ty, e')
+
+let freshen_typed_prop_typed_instance x { x = e; ty = ety } =
+  let x', e' = freshen_prop_typed_instance x e in
+  (x', e'#:ety)
+
 let has_quantifiers (prop_e : 't prop) =
   fold_prop
     (fun acc -> function Forall _ | Exists _ -> true | _ -> acc)
