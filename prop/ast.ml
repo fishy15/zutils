@@ -106,6 +106,10 @@ let get_lit_field_idx loc t name =
   | None -> _die [%here]
   | Some n -> n
 
+let var_to_lit { x; ty } = (AVar x#:ty)#:ty
+let bool_var v = var_to_lit v#:Nt.bool_ty
+let int_var v = var_to_lit v#:Nt.int_ty
+
 open Zdatatype
 
 let unified_axiom_type_var = "a"
